@@ -100,6 +100,8 @@ class BLiveClient:
         session: Optional[aiohttp.ClientSession] = None,
         heartbeat_interval=30,
         ssl: Union[bool, ssl_.SSLContext] = True,
+        buvid: Optional[str] = None,
+        sessdata: Optional[str] = None,
     ):
         self._tmp_room_id = room_id
         """用来init_room的临时房间ID，可以用短ID"""
@@ -141,6 +143,10 @@ class BLiveClient:
         """网络协程的future"""
         self._heartbeat_timer_handle: Optional[asyncio.TimerHandle] = None
         """发心跳包定时器的handle"""
+
+        # B站的 cookie
+        self._buvid = buvid
+        self._sessdata = sessdata
 
     @property
     def is_running(self) -> bool:
@@ -304,7 +310,8 @@ class BLiveClient:
                 DANMAKU_SERVER_CONF_URL,
                 headers={
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
-                                  ' Chrome/102.0.0.0 Safari/537.36'
+                                  ' Chrome/102.0.0.0 Safari/537.36',
+                    'Cookie': f'SESSDATA={self._sessdata or ""}'
                 },
                 params={
                     'id': self._room_id,
@@ -447,6 +454,7 @@ class BLiveClient:
             'uid': self._uid or self.room_owner_uid or 0,
             'roomid': self._room_id,
             'protover': 3,
+            'buvid': self._buvid or '',
             'platform': 'web',
             'type': 2
         }
